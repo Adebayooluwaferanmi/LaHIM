@@ -12,6 +12,22 @@ nav:
       - Frontend: https://hospitalrun-frontend.readthedocs.io
       - Server: https://hospitalrun-server.readthedocs.io
       - Architectural Decision Records: adr.md
+  - Architecture:
+      - System Architecture: docs/architecture/system-architecture.md
+      - LIMS Structured Results: docs/architecture/lims-structured-results.md
+      - Microscope Integration: docs/architecture/microscope-integration.md
+      - Analytics and ML: docs/architecture/analytics-ml.md
+      - CI/CD and DevOps: docs/architecture/ci-cd-devops.md
+  - Modules:
+      - Vocabulary Service: docs/modules/vocabulary-service-module.md
+      - LIMS Module: docs/modules/lims-module-explanation.md
+      - Patient Portal: docs/modules/patient-portal-module.md
+      - External Consultation: docs/modules/external-consultation-module.md
+      - Module Integration: docs/modules/module-integration-plan.md
+  - Integration:
+      - Vocabulary & LIMS Integration: docs/integration/vocabulary-lims-integration.md
+      - Integration Complete: docs/integration/integration-complete.md
+      - Integration Summary: docs/integration/integration-summary.md
   - About:
       - Project: https://hospitalrun.io
       - Contributing: https://github.com/HospitalRun/hospitalrun/blob/master/.github/CONTRIBUTING.md

@@ -13,24 +13,25 @@
     "commit-core": "yarn workspace @hospitalrun/core commit",
     "commit-frontend": "yarn workspace @hospitalrun/frontend commit",
     "commit-server": "yarn workspace @hospitalrun/server commit",
-    "update": "yarn upgrade-interactive --latest"
+    "update": "yarn upgrade-interactive --latest",
+    "dev:db": "docker compose up -d couchdb",
+    "dev:server": "yarn workspace @hospitalrun/server dev:start",
+    "dev:frontend": "yarn workspace @hospitalrun/frontend start",
+    "build:frontend": "yarn workspace @hospitalrun/frontend build",
+    "serve:frontend": "npx serve -s packages/frontend/build -l 3001",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@commitlint/cli": "~8.2.0",
-    "@commitlint/config-conventional": "^8.3.4",
-    "@commitlint/core": "~8.2.0",
-    "@commitlint/prompt": "^8.3.5",
-    "commitizen": "~4.0.3",
-    "commitlint-config-cz": "^0.13.0",
-    "cross-env": "~6.0.3",
-    "cz-conventional-changelog": "^3.1.0",
-    "dateformat": "~3.0.3",
-    "husky": "~3.1.0"
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
-    }
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@commitlint/core": "^19.6.0",
+    "@commitlint/prompt": "^19.6.0",
+    "commitizen": "^4.3.1",
+    "commitlint-config-cz": "^0.13.2",
+    "cross-env": "^7.0.3",
+    "cz-conventional-changelog": "^3.3.0",
+    "dateformat": "^5.0.3",
+    "husky": "^9.1.7"
   },
   "config": {
     "commitizen": {
@@ -61,5 +62,13 @@
       "**/webpack",
       "**/webpack/**"
     ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "resolutions": {
+    "@types/babel__traverse": "7.11.1",
+    "parse5-parser-stream": "5.1.1"
   }
 }

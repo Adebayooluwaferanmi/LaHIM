@@ -66,3 +66,30 @@ typings/
 
 # dotenv environment variables file
 .env
+
+# Documentation files (keeping only README.md)
+*.md
+!README.md
+!LICENSE
+!SECURITY.md
+# Exclude all documentation directories
+docs/
+# Exclude root-level documentation files
+APPLICATION_STATUS.md
+CODEBASE_ANALYSIS.md
+CSS_AND_SEARCH_FIX.md
+DEPENDENCY_FIXES.md
+DEPENDENCY_UPDATE_GUIDE.md
+DEPENDENCY_UPDATES_SUMMARY.md
+FINAL_STATUS.md
+FRONTEND_FIXES.md
+IMPROVEMENTS_COMPLETED.md
+INSTALLATION_INSTRUCTIONS.md
+NODE_SASS_FIX.md
+READABLE_STREAM_FIX.md
+SOLUTIONS_APPLIED.md
+SUMMARY.md
+TEST_RESULTS.md
+TESTING_COMPLETE.md
+VERSION_FIXES_APPLIED.md
+LIMS_COMPREHENSIVE_DESIGN.md

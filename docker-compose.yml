@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  couchdb:
+    image: couchdb:3
+    container_name: hr-couchdb
+    environment:
+      - COUCHDB_USER=dev
+      - COUCHDB_PASSWORD=dev
+    ports:
+      - "5984:5984"
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://dev:dev@localhost:5984/"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  couchdb-data:
+    driver: local
+
+
