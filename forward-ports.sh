@@ -119,3 +119,4 @@ trap cleanup SIGINT SIGTERM
 # Wait for ngrok process
 wait $NGROK_PID
 
+
