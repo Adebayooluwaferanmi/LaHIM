@@ -16,9 +16,86 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    networks:
+      - lahim-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: hr-postgres
+    environment:
+      - POSTGRES_USER=lahim
+      - POSTGRES_PASSWORD=lahim_dev
+      - POSTGRES_DB=lahim
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lahim"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - lahim-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: hr-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - lahim-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hr-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - lahim-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hr-grafana
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - lahim-network
 
 volumes:
   couchdb-data:
     driver: local
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  lahim-network:
+    driver: bridge
 
 

@@ -1,0 +1,30 @@
+{
+  "name": "@lahim/loinc",
+  "version": "1.0.0",
+  "description": "LOINC code lookup and search for LaHIM LIMS",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/data"
+  ],
+  "scripts": {
+    "build": "npm run clean && tsc",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "loinc",
+    "medical",
+    "codes",
+    "lims"
+  ],
+  "author": "LaHIM Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.7.0"
+  }
+}
+
