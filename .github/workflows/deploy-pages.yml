@@ -32,16 +32,35 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Build components package
+        working-directory: packages/components-lahim
+        run: yarn build
+
       - name: Build frontend
         working-directory: packages/frontend
         env:
           VITE_HOSPITALRUN_API: ${{ secrets.VITE_HOSPITALRUN_API || 'http://localhost:3000' }}
-          VITE_BASE_PATH: ${{ github.event.repository.name }}
+          VITE_BASE_PATH: ${{ secrets.VITE_BASE_PATH || '/' }}
         run: yarn build
 
+      - name: Create lahim.io directory and copy build output
+        run: |
+          rm -rf lahim.io
+          mkdir -p lahim.io
+          cp -r packages/frontend/build/* lahim.io/
+
       - name: Copy index.html to 404.html for SPA routing
-        working-directory: packages/frontend/build
+        working-directory: lahim.io
         run: cp index.html 404.html
+
+      - name: Create .nojekyll file
+        run: touch lahim.io/.nojekyll
+
+      - name: Ensure CNAME file exists
+        run: |
+          if [ ! -f lahim.io/CNAME ]; then
+            echo "lahim.io" > lahim.io/CNAME
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -49,7 +68,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: packages/frontend/build
+          path: lahim.io
 
   deploy:
     environment:

@@ -15,7 +15,23 @@ This package provides search and lookup functionality for LOINC (Logical Observa
 
 ## Installation
 
-This package is part of the LaHIM monorepo and is automatically available to other packages via workspace protocol.
+### As an npm package
+
+Install the package as a dependency:
+
+```bash
+npm install @lahim/loinc
+```
+
+or with yarn:
+
+```bash
+yarn add @lahim/loinc
+```
+
+### Monorepo Usage
+
+This package is part of the LaHIM monorepo and is automatically available to other packages via workspace protocol when working within the monorepo.
 
 ## Usage
 
@@ -67,6 +83,28 @@ The server exposes these endpoints:
 
 - `GET /loinc/search?q=glucose&limit=50` - Search LOINC codes
 - `GET /loinc/:code` - Get specific LOINC code by coding value
+
+## Publishing
+
+This package can be published to npm. Before publishing:
+
+1. **Build the package**:
+   ```bash
+   npm run build
+   ```
+
+2. **Test the build**:
+   ```bash
+   npm pack
+   ```
+   This creates a tarball you can test locally.
+
+3. **Publish to npm** (requires npm login):
+   ```bash
+   npm publish --access public
+   ```
+
+   Note: The `--access public` flag is required for scoped packages (`@lahim/*`) to publish to the public npm registry.
 
 ## License
 

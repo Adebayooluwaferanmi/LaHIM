@@ -19,8 +19,17 @@
     "codes",
     "lims"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Adebayooluwaferanmi/LaHIM.git",
+    "directory": "packages/loinc"
+  },
   "author": "LaHIM Team",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Adebayooluwaferanmi/LaHIM/issues"
+  },
+  "homepage": "https://github.com/Adebayooluwaferanmi/LaHIM#readme",
   "devDependencies": {
     "@types/node": "^20.14.0",
     "rimraf": "^5.0.5",

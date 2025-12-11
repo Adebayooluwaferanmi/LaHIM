@@ -6,7 +6,7 @@
 
 **A Modern Transformation of HospitalRun for Laboratory-First Healthcare Systems**
 
-[![License](https://img.shields.io/github/license/hospitalrun/hospitalrun)](LICENSE)
+[![License](https://img.shields.io/github/license/Adebayooluwaferanmi/LaHIM)](LICENSE)
 
 </div>
 
@@ -407,6 +407,54 @@ yarn workspace @hospitalrun/server seed:vocabularies  # Seed vocabularies
 - **Before**: Minimal TypeScript usage
 - **After**: Comprehensive type definitions
 - **Benefit**: Fewer runtime errors, better IDE support
+
+---
+
+## Publishable Packages
+
+This monorepo contains several packages that can be published to npm and used as dependencies in other projects:
+
+### Available Packages
+
+1. **[@hospitalrun/core](packages/core/)** - Shared interfaces and models
+   - Install: `npm install @hospitalrun/core`
+   - Provides: TypeScript types, schemas, and shared models
+
+2. **[@hospitalrun/components](packages/components/)** - React component library (React 16 compatible)
+   - Install: `npm install @hospitalrun/components`
+   - Provides: Reusable React components for HospitalRun
+
+3. **[@lahim/components](packages/components-lahim/)** - Modern React components (React 18 compatible)
+   - Install: `npm install @lahim/components`
+   - Provides: Modern React components compatible with React 18 and Bootstrap 4
+
+4. **[@hospitalrun/cli](packages/cli/)** - Command-line interface
+   - Install: `npm install -g @hospitalrun/cli` (global) or `npm install --save-dev @hospitalrun/cli` (local)
+   - Provides: CLI tools for CouchDB design document management
+
+5. **[@lahim/loinc](packages/loinc/)** - LOINC code lookup and search
+   - Install: `npm install @lahim/loinc`
+   - Provides: Search and lookup functionality for LOINC codes (369,000+ codes)
+
+### Using Packages as Dependencies
+
+Each package has detailed installation and usage instructions in its README file:
+- See `packages/core/README.md` for `@hospitalrun/core`
+- See `packages/components/README.md` for `@hospitalrun/components`
+- See `packages/components-lahim/README.md` for `@lahim/components`
+- See `packages/cli/README.md` for `@hospitalrun/cli`
+- See `packages/loinc/README.md` for `@lahim/loinc`
+
+### Publishing Packages
+
+To publish a package to npm:
+
+1. Navigate to the package directory: `cd packages/<package-name>`
+2. Build the package: `npm run build`
+3. Test the build: `npm pack` (creates a tarball for local testing)
+4. Publish: `npm publish --access public` (required for scoped packages)
+
+Note: Some packages use semantic-release for automated versioning and publishing based on conventional commits.
 
 ---
 
