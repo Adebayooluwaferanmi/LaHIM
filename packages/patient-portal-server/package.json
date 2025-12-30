@@ -1,0 +1,37 @@
+{
+  "name": "@lahim/patient-portal-server",
+  "version": "0.1.0",
+  "description": "Patient Portal & External Consultation API service for LaHIM",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "nodemon -w src -e ts --exec \"npm run build && npm start\"",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@fastify/helmet": "^11.1.1",
+    "@fastify/jwt": "^7.0.1",
+    "@fastify/multipart": "^8.0.0",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "fastify": "^4.28.0",
+    "fastify-plugin": "^4.5.1",
+    "make-promises-safe": "~5.1.0",
+    "nodemailer": "^6.9.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.2",
+    "@types/node": "^20.14.0",
+    "@types/nodemailer": "^6.4.14",
+    "nodemon": "~2.0.0",
+    "prisma": "^5.22.0",
+    "typescript": "^5.7.0"
+  }
+}
+
+

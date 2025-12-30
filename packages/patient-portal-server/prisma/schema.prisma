@@ -1,0 +1,176 @@
+// Prisma schema for Patient Portal & External Consultation service
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PORTAL_DATABASE_URL")
+}
+
+enum PortalUserRole {
+  PATIENT
+  EXTERNAL_CONSULTANT
+  INTERNAL
+}
+
+enum PortalUserStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+model PortalUser {
+  id                String           @id @default(uuid())
+  email             String           @unique
+  passwordHash      String
+  role              PortalUserRole
+  status            PortalUserStatus @default(ACTIVE)
+  inviteToken       String?          @unique
+  inviteExpiresAt   DateTime?
+  resetToken        String?          @unique
+  resetTokenExpiresAt DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  patientProfile    PatientProfile?
+  consultantProfile ExternalConsultant?
+}
+
+model PatientProfile {
+  id                     String             @id @default(uuid())
+  userId                 String             @unique
+  corePatientId          String?            @unique
+  firstName              String?
+  lastName               String?
+  dateOfBirth            DateTime?
+  phone                  String?
+  communicationPreferences String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  user           PortalUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consultations  ConsultationCase[]
+  referrals      ConsultationReferral[]
+}
+
+model ExternalConsultant {
+  id            String             @id @default(uuid())
+  userId        String             @unique
+  specialty     String?
+  organization  String?
+  status        String             @default("pending") // pending, active, inactive
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user          PortalUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consultations ConsultationCase[]
+}
+
+model ConsultationReferral {
+  id              String    @id @default(uuid())
+  coreReferralId  String?
+  corePatientId   String?
+  patientProfileId String?
+  requestedSpecialty String?
+  priority        String?
+  reason          String?
+  status          String    @default("pending") // pending, accepted, rejected, cancelled
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  patientProfile  PatientProfile?    @relation(fields: [patientProfileId], references: [id], onDelete: SetNull)
+  consultationCase ConsultationCase?
+
+  @@index([coreReferralId])
+  @@index([corePatientId])
+}
+
+model ConsultationCase {
+  id               String              @id @default(uuid())
+  referralId       String?
+  patientProfileId String
+  consultantId     String?
+  status           String              @default("pending") // pending, accepted, scheduled, completed
+  title            String?
+  notes            String?
+  scheduledAt      DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  referral         ConsultationReferral? @relation(fields: [referralId], references: [id], onDelete: SetNull)
+  patientProfile   PatientProfile       @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  consultant       ExternalConsultant?  @relation(fields: [consultantId], references: [id], onDelete: SetNull)
+  slots            AppointmentSlot[]
+  threads          MessageThread[]
+  documents        ConsultationDocument[]
+
+  @@index([patientProfileId])
+  @@index([consultantId])
+  @@index([status])
+}
+
+model AppointmentSlot {
+  id         String            @id @default(uuid())
+  caseId     String
+  start      DateTime
+  end        DateTime
+  status     String            @default("proposed") // proposed, accepted, declined, cancelled
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  consultationCase ConsultationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([status])
+  @@index([start])
+}
+
+model MessageThread {
+  id        String     @id @default(uuid())
+  caseId    String
+  subject   String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  consultationCase ConsultationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  messages         Message[]
+
+  @@index([caseId])
+}
+
+model Message {
+  id          String       @id @default(uuid())
+  threadId    String
+  senderUserId String
+  body        String
+  createdAt   DateTime     @default(now())
+
+  thread      MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([senderUserId])
+}
+
+model ConsultationDocument {
+  id              String    @id @default(uuid())
+  caseId          String
+  type            String
+  title           String?
+  filename        String?
+  storageKey      String?
+  contentType     String?
+  size            Int?
+  uploadedByUserId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  consultationCase ConsultationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([type])
+}
+
+

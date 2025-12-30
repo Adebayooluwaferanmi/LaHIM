@@ -156,32 +156,22 @@ External consultation workflow:
 
 ## Architecture
 
-### Module Dependencies
+**📖 For complete architecture and design documentation, see [`ARCHITECTURE_AND_DESIGN.md`](ARCHITECTURE_AND_DESIGN.md)**
 
-```
-Vocabulary Service (Complete)
-    ↓
-LIMS Module (Complete)
-    ↓
-Patient Portal (Planned)
-    ↓
-External Consultation (Planned)
-```
+### Quick Overview
 
-### Service Architecture
+- **Module Dependencies**: Vocabulary Service → LIMS Module → Patient Portal (Planned)
+- **Service Architecture**: Microservices with API Gateway, Event Bus, and shared services
+- **Database Strategy**: Dual-write pattern (CouchDB for offline sync + PostgreSQL for analytics)
+- **Data Standards**: SNOMED-CT, LOINC, UCUM, RxNorm/ATC, FHIR R4 compliant
 
-- **API Gateway**: Centralized routing and authentication
-- **Microservices**: Each module is an independent service
-- **Shared Services**: Notifications, Documents, Audit
-- **Event Bus**: Cross-module communication (Kafka/Redpanda planned)
-- **Database**: Separate CouchDB databases per module
-
-### Data Standards
-
-- **Terminologies**: SNOMED-CT, LOINC, UCUM, RxNorm/ATC
-- **Interoperability**: FHIR R4 compliant
-- **Structured Data**: All non-numeric results use controlled vocabularies
-- **ML-Ready**: Structured exports for analytics and research
+**See [`ARCHITECTURE_AND_DESIGN.md`](ARCHITECTURE_AND_DESIGN.md) for:**
+- Complete architecture diagrams
+- Design patterns and decisions
+- Module structure details
+- Data architecture
+- Infrastructure components
+- Implementation status
 
 ---
 
