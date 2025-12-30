@@ -1,17 +1,10 @@
-import { Server, IncomingMessage, ServerResponse } from 'http'
-import { FastifyError, FastifyInstance } from 'fastify'
-
-type FastifyTypedInstance = FastifyInstance<Server, IncomingMessage, ServerResponse>
+import { FastifyPluginAsync } from 'fastify'
 
 interface CreateMessageBody {
   body: string
 }
 
-export default (
-  fastify: FastifyTypedInstance,
-  _opts: {},
-  next: (err?: FastifyError) => void,
-) => {
+const messagingService: FastifyPluginAsync = async (fastify) => {
   const ensureAccessToCase = async (userId: string, role: string, caseId: string) => {
     const consultation = await fastify.prisma.consultationCase.findUnique({
       where: { id: caseId },
@@ -134,7 +127,8 @@ export default (
     },
   )
 
-  next()
 }
+
+export default messagingService
 
 

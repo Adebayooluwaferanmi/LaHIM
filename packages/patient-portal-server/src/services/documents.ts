@@ -1,10 +1,7 @@
-import { Server, IncomingMessage, ServerResponse } from 'http'
-import { FastifyError, FastifyInstance } from 'fastify'
+import { FastifyPluginAsync } from 'fastify'
 import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { randomBytes } from 'crypto'
-
-type FastifyTypedInstance = FastifyInstance<Server, IncomingMessage, ServerResponse>
 
 interface CreateDocumentBody {
   type: string
@@ -15,11 +12,7 @@ interface CreateDocumentBody {
   size?: number
 }
 
-export default (
-  fastify: FastifyTypedInstance,
-  _opts: {},
-  next: (err?: FastifyError) => void,
-) => {
+const documentsService: FastifyPluginAsync = async (fastify) => {
   const ensureCaseAccess = async (userId: string, role: string, caseId: string) => {
     const consultation = await fastify.prisma.consultationCase.findUnique({
       where: { id: caseId },
@@ -246,7 +239,8 @@ export default (
     },
   )
 
-  next()
 }
+
+export default documentsService
 
 
