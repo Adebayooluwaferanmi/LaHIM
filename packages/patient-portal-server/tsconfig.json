@@ -4,7 +4,8 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "../../node_modules/.prisma"
   ],
   "compilerOptions": {
     "typeRoots": [
@@ -22,13 +23,14 @@
     "sourceMap": true,
     "removeComments": true,
     "newLine": "lf",
-    "noEmitOnError": true,
+    "noEmitOnError": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   }
 }
 

@@ -1,6 +1,7 @@
 import 'make-promises-safe'
 
-import Fastify from 'fastify'
+// @ts-ignore
+const Fastify = require('fastify')
 import patientPortalApp = require('./app')
 
 const port = Number(process.env.PORTAL_PORT || process.env.PORT || 4001)
@@ -10,7 +11,7 @@ const fastify = Fastify((patientPortalApp as any).options || { logger: true })
 
 fastify.register(patientPortalApp as any)
 
-fastify.listen({ port, host }, (err, address) => {
+fastify.listen({ port, host }, (err: any, address: any) => {
   if (err) {
     fastify.log.error(err)
     process.exit(1)

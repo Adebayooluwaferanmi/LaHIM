@@ -89,7 +89,7 @@ model ConsultationReferral {
 
 model ConsultationCase {
   id               String              @id @default(uuid())
-  referralId       String?
+  referralId       String?             @unique
   patientProfileId String
   consultantId     String?
   status           String              @default("pending") // pending, accepted, scheduled, completed
@@ -130,15 +130,13 @@ model AppointmentSlot {
 
 model MessageThread {
   id        String     @id @default(uuid())
-  caseId    String
+  caseId    String     @unique
   subject   String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
   consultationCase ConsultationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
   messages         Message[]
-
-  @@index([caseId])
 }
 
 model Message {

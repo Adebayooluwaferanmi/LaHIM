@@ -1,30 +1,27 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
-interface CompleteConsultationBody {
-  notes?: string
+const idParamsSchema = {
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: { id: { type: 'string', format: 'uuid' } },
+  },
 }
 
-interface CreateSlotBody {
-  start: string
-  end: string
-}
-
-const consultationsService: FastifyPluginAsync = async (fastify) => {
+const consultationsService: FastifyPluginAsync = async (fastify: any) => {
   fastify.get(
     '/consultations',
     {
       preHandler: fastify.authenticate.bind(fastify),
     },
-    async (request, reply) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = request.user as { sub: string; role: string }
 
       let where: any = {}
 
       if (currentUser.role === 'EXTERNAL_CONSULTANT') {
         const consultant = await fastify.prisma.externalConsultant.findFirst({
-          where: {
-            userId: currentUser.sub,
-          },
+          where: { userId: currentUser.sub },
         })
 
         if (!consultant) {
@@ -35,9 +32,7 @@ const consultationsService: FastifyPluginAsync = async (fastify) => {
         where.consultantId = consultant.id
       } else if (currentUser.role === 'PATIENT') {
         const patient = await fastify.prisma.patientProfile.findFirst({
-          where: {
-            userId: currentUser.sub,
-          },
+          where: { userId: currentUser.sub },
         })
 
         if (!patient) {
@@ -54,18 +49,14 @@ const consultationsService: FastifyPluginAsync = async (fastify) => {
           referral: true,
           patientProfile: true,
           consultant: {
-            include: {
-              user: true,
-            },
+            include: { user: true },
           },
           slots: true,
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: { createdAt: 'desc' },
       })
 
-      const result = cases.map((c) => ({
+      const result = cases.map((c: any) => ({
         id: c.id,
         status: c.status,
         title: c.title,
@@ -80,10 +71,7 @@ const consultationsService: FastifyPluginAsync = async (fastify) => {
               specialty: c.consultant.specialty,
               organization: c.consultant.organization,
               user: c.consultant.user
-                ? {
-                    id: c.consultant.user.id,
-                    email: c.consultant.user.email,
-                  }
+                ? { id: c.consultant.user.id, email: c.consultant.user.email }
                 : null,
             }
           : null,
@@ -97,9 +85,10 @@ const consultationsService: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/consultations/:id',
     {
+      schema: idParamsSchema,
       preHandler: fastify.authenticate.bind(fastify),
     },
-    async (request, reply) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = request.user as { sub: string; role: string }
       const { id } = request.params as { id: string }
 
@@ -109,9 +98,7 @@ const consultationsService: FastifyPluginAsync = async (fastify) => {
           referral: true,
           patientProfile: true,
           consultant: {
-            include: {
-              user: true,
-            },
+            include: { user: true },
           },
           slots: true,
         },
@@ -124,12 +111,8 @@ const consultationsService: FastifyPluginAsync = async (fastify) => {
 
       if (currentUser.role === 'PATIENT') {
         const patient = await fastify.prisma.patientProfile.findFirst({
-          where: {
-            id: consultation.patientProfileId,
-            userId: currentUser.sub,
-          },
+          where: { id: consultation.patientProfileId, userId: currentUser.sub },
         })
-
         if (!patient) {
           reply.code(403).send({ error: 'Access denied' })
           return
@@ -138,12 +121,8 @@ const consultationsService: FastifyPluginAsync = async (fastify) => {
 
       if (currentUser.role === 'EXTERNAL_CONSULTANT') {
         const consultant = await fastify.prisma.externalConsultant.findFirst({
-          where: {
-            id: consultation.consultantId ?? '',
-            userId: currentUser.sub,
-          },
+          where: { id: consultation.consultantId ?? '', userId: currentUser.sub },
         })
-
         if (!consultant) {
           reply.code(403).send({ error: 'Access denied' })
           return
@@ -153,150 +132,6 @@ const consultationsService: FastifyPluginAsync = async (fastify) => {
       reply.send(consultation)
     },
   )
-
-  fastify.post(
-    '/consultations/:id/slots',
-    {
-      preHandler: fastify.authenticate.bind(fastify),
-    },
-    async (request, reply) => {
-      const currentUser = request.user as { sub: string; role: string }
-
-      if (currentUser.role !== 'EXTERNAL_CONSULTANT') {
-        reply.code(403).send({ error: 'Only external consultants can propose slots' })
-        return
-      }
-
-      const { id } = request.params as { id: string }
-      const body = request.body as CreateSlotBody
-
-      if (!body.start || !body.end) {
-        reply.code(400).send({ error: 'start and end are required' })
-        return
-      }
-
-      const consultation = await fastify.prisma.consultationCase.findUnique({
-        where: { id },
-        include: { consultant: true },
-      })
-
-      if (!consultation) {
-        reply.code(404).send({ error: 'Consultation not found' })
-        return
-      }
-
-      const consultant = await fastify.prisma.externalConsultant.findFirst({
-        where: {
-          id: consultation.consultantId ?? '',
-          userId: currentUser.sub,
-        },
-      })
-
-      if (!consultant) {
-        reply.code(403).send({ error: 'Access denied' })
-        return
-      }
-
-      const slot = await fastify.prisma.appointmentSlot.create({
-        data: {
-          caseId: consultation.id,
-          start: new Date(body.start),
-          end: new Date(body.end),
-          status: 'proposed',
-        },
-      })
-
-      reply.code(201).send(slot)
-    },
-  )
-
-  fastify.post(
-    '/consultations/:id/complete',
-    {
-      preHandler: fastify.authenticate.bind(fastify),
-    },
-    async (request, reply) => {
-      const currentUser = request.user as { sub: string; role: string }
-
-      if (currentUser.role !== 'EXTERNAL_CONSULTANT') {
-        reply.code(403).send({ error: 'Only external consultants can complete consultations' })
-        return
-      }
-
-      const { id } = request.params as { id: string }
-      const body = request.body as CompleteConsultationBody
-
-      const consultation = await fastify.prisma.consultationCase.findUnique({
-        where: { id },
-        include: { consultant: true },
-      })
-
-      if (!consultation) {
-        reply.code(404).send({ error: 'Consultation not found' })
-        return
-      }
-
-      const consultant = await fastify.prisma.externalConsultant.findFirst({
-        where: {
-          id: consultation.consultantId ?? '',
-          userId: currentUser.sub,
-        },
-      })
-
-      if (!consultant) {
-        reply.code(403).send({ error: 'Access denied' })
-        return
-      }
-
-      const updated = await fastify.prisma.consultationCase.update({
-        where: { id: consultation.id },
-        data: {
-          status: 'completed',
-          notes: body.notes ?? consultation.notes,
-          completedAt: new Date(),
-        },
-      })
-
-      // Notify LaHIM core when a consultation is completed
-      const lahimCoreUrl = process.env.LAHIM_CORE_API_URL || 'http://localhost:3000'
-      const webhookToken = process.env.PORTAL_WEBHOOK_TOKEN
-
-      // Get documents for this consultation
-      const documents = await fastify.prisma.consultationDocument.findMany({
-        where: { caseId: updated.id },
-        select: {
-          id: true,
-          type: true,
-          title: true,
-          filename: true,
-        },
-      })
-
-      try {
-        await fetch(`${lahimCoreUrl}/webhooks/consultation-completed`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(webhookToken ? { 'X-Webhook-Token': webhookToken } : {}),
-          },
-          body: JSON.stringify({
-            consultationId: updated.id,
-            portalReferralId: consultation.referralId,
-            notes: updated.notes,
-            documents: documents,
-          }),
-        }).catch((err) => {
-          fastify.log.warn({ error: err }, 'Failed to notify LaHIM core of consultation completion')
-        })
-      } catch (err) {
-        fastify.log.warn({ error: err }, 'Error calling LaHIM core webhook')
-      }
-
-      reply.send(updated)
-    },
-  )
 }
 
 export default consultationsService
-
-

@@ -63,19 +63,6 @@ export default function ConsultationDetail() {
             )}
           </Panel>
 
-          {consultation.slots && consultation.slots.length > 0 && (
-            <Panel title="Appointment Slots" style={{ marginTop: '20px' }}>
-              <ul>
-                {consultation.slots.map((slot) => (
-                  <li key={slot.id}>
-                    {format(new Date(slot.start), 'MMM dd, yyyy HH:mm')} -{' '}
-                    {format(new Date(slot.end), 'HH:mm')} ({slot.status})
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-          )}
-
           <MessageThread consultationId={id!} />
         </Col>
 

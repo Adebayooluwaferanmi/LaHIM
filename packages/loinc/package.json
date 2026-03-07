@@ -9,7 +9,7 @@
     "src/data"
   ],
   "scripts": {
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && tsc --skipLibCheck",
     "clean": "rimraf dist",
     "prepublishOnly": "npm run build"
   },

@@ -7,11 +7,10 @@ import React from 'react'
 
 import Event from './interfaces'
 
-// FullCalendar CSS imports - v4 uses main.css, v5+ uses index.css
-// We'll import both to support different versions
-import '@fullcalendar/core/main.css'
-import '@fullcalendar/daygrid/main.css'
-import '@fullcalendar/timegrid/main.css'
+// FullCalendar CSS imports - v5+ uses index.css
+import '@fullcalendar/core/index.css'
+import '@fullcalendar/daygrid/index.css'
+import '@fullcalendar/timegrid/index.css'
 
 type View = 'day' | 'month' | 'week'
 
@@ -117,12 +116,12 @@ const Calendar = (props: CalendarProps) => {
           click: () => onNavClick('today'),
         },
       }}
-      header={{
+      headerToolbar={{
         left: 'customPrev,customNext customToday',
         center: 'title',
         right: getViewsFromViewsProp(views),
       }}
-      defaultView={getCalendarViewFromViewProp(view)}
+      initialView={getCalendarViewFromViewProp(view)}
       plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
       themeSystem="bootstrap"
       dateClick={(arg) => {

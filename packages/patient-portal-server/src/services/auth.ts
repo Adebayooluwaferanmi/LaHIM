@@ -1,4 +1,5 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
+// @ts-ignore
 import { compare, hash } from 'bcryptjs'
 import { randomBytes } from 'crypto'
 
@@ -26,8 +27,6 @@ interface ActivateInviteBody {
   password: string
   firstName?: string
   lastName?: string
-  specialty?: string
-  organization?: string
 }
 
 interface RequestPasswordResetBody {
@@ -43,7 +42,88 @@ interface VerifyResetTokenBody {
   resetToken: string
 }
 
-const authService: FastifyPluginAsync = async (fastify) => {
+const registerPatientSchema = {
+  body: {
+    type: 'object',
+    required: ['email', 'password'],
+    properties: {
+      email: { type: 'string', format: 'email' },
+      password: { type: 'string', minLength: 8 },
+      firstName: { type: 'string' },
+      lastName: { type: 'string' },
+      dateOfBirth: { type: 'string' },
+      phone: { type: 'string' },
+      corePatientId: { type: 'string' },
+    },
+  },
+}
+
+const loginSchema = {
+  body: {
+    type: 'object',
+    required: ['email', 'password'],
+    properties: {
+      email: { type: 'string', format: 'email' },
+      password: { type: 'string', minLength: 1 },
+    },
+  },
+}
+
+const refreshSchema = {
+  body: {
+    type: 'object',
+    required: ['refreshToken'],
+    properties: {
+      refreshToken: { type: 'string', minLength: 1 },
+    },
+  },
+}
+
+const activateInviteSchema = {
+  body: {
+    type: 'object',
+    required: ['inviteToken', 'password'],
+    properties: {
+      inviteToken: { type: 'string', minLength: 1 },
+      password: { type: 'string', minLength: 8 },
+      firstName: { type: 'string' },
+      lastName: { type: 'string' },
+    },
+  },
+}
+
+const requestResetSchema = {
+  body: {
+    type: 'object',
+    required: ['email'],
+    properties: {
+      email: { type: 'string', format: 'email' },
+    },
+  },
+}
+
+const verifyResetTokenSchema = {
+  body: {
+    type: 'object',
+    required: ['resetToken'],
+    properties: {
+      resetToken: { type: 'string', minLength: 1 },
+    },
+  },
+}
+
+const resetPasswordSchema = {
+  body: {
+    type: 'object',
+    required: ['resetToken', 'newPassword'],
+    properties: {
+      resetToken: { type: 'string', minLength: 1 },
+      newPassword: { type: 'string', minLength: 8 },
+    },
+  },
+}
+
+const authService: FastifyPluginAsync = async (fastify: any) => {
   const buildTokens = (userId: string, role: string) => {
     const accessToken = fastify.jwt.sign(
       {
@@ -70,14 +150,17 @@ const authService: FastifyPluginAsync = async (fastify) => {
     return { accessToken, refreshToken }
   }
 
-  fastify.post('/auth/register-patient', async (request, reply) => {
+  const authRateLimit = {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: '1 minute',
+      },
+    },
+  }
+
+  fastify.post('/auth/register-patient', { schema: registerPatientSchema, ...authRateLimit }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as RegisterPatientBody
-
-    if (!body.email || !body.password) {
-      reply.code(400).send({ error: 'Email and password are required' })
-      return
-    }
-
     const email = body.email.toLowerCase().trim()
 
     const existing = await fastify.prisma.portalUser.findUnique({
@@ -130,14 +213,8 @@ const authService: FastifyPluginAsync = async (fastify) => {
     })
   })
 
-  fastify.post('/auth/login', async (request, reply) => {
+  fastify.post('/auth/login', { schema: loginSchema, ...authRateLimit }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as LoginBody
-
-    if (!body.email || !body.password) {
-      reply.code(400).send({ error: 'Email and password are required' })
-      return
-    }
-
     const email = body.email.toLowerCase().trim()
 
     const user = await fastify.prisma.portalUser.findUnique({
@@ -178,13 +255,8 @@ const authService: FastifyPluginAsync = async (fastify) => {
     })
   })
 
-  fastify.post('/auth/refresh', async (request, reply) => {
+  fastify.post('/auth/refresh', { schema: refreshSchema }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as RefreshBody
-
-    if (!body.refreshToken) {
-      reply.code(400).send({ error: 'refreshToken is required' })
-      return
-    }
 
     try {
       const payload = fastify.jwt.verify(body.refreshToken) as {
@@ -215,13 +287,8 @@ const authService: FastifyPluginAsync = async (fastify) => {
     }
   })
 
-  fastify.post('/auth/activate-invite', async (request, reply) => {
+  fastify.post('/auth/activate-invite', { schema: activateInviteSchema }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as ActivateInviteBody
-
-    if (!body.inviteToken || !body.password) {
-      reply.code(400).send({ error: 'inviteToken and password are required' })
-      return
-    }
 
     const user = await fastify.prisma.portalUser.findFirst({
       where: {
@@ -229,6 +296,7 @@ const authService: FastifyPluginAsync = async (fastify) => {
       },
       include: {
         consultantProfile: true,
+        patientProfile: true,
       },
     })
 
@@ -249,6 +317,11 @@ const authService: FastifyPluginAsync = async (fastify) => {
 
     const passwordHash = await hash(body.password, 10)
 
+    if (user.role !== 'PATIENT') {
+      reply.code(400).send({ error: 'Only patient invites can be activated' })
+      return
+    }
+
     const updated = await fastify.prisma.portalUser.update({
       where: { id: user.id },
       data: {
@@ -256,23 +329,9 @@ const authService: FastifyPluginAsync = async (fastify) => {
         status: 'ACTIVE',
         inviteToken: null,
         inviteExpiresAt: null,
-        consultantProfile: {
-          upsert: {
-            create: {
-              specialty: body.specialty ?? user.consultantProfile?.specialty,
-              organization: body.organization ?? user.consultantProfile?.organization,
-              status: 'active',
-            },
-            update: {
-              specialty: body.specialty ?? user.consultantProfile?.specialty,
-              organization: body.organization ?? user.consultantProfile?.organization,
-              status: 'active',
-            },
-          },
-        },
       },
       include: {
-        consultantProfile: true,
+        patientProfile: true,
       },
     })
 
@@ -283,37 +342,28 @@ const authService: FastifyPluginAsync = async (fastify) => {
         id: updated.id,
         email: updated.email,
         role: updated.role,
-        consultantProfile: updated.consultantProfile,
+        patientProfile: updated.patientProfile,
       },
       tokens,
     })
   })
 
-  // Password reset endpoints
-  fastify.post('/auth/request-reset', async (request, reply) => {
+  fastify.post('/auth/request-reset', { schema: requestResetSchema, ...authRateLimit }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as RequestPasswordResetBody
-
-    if (!body.email) {
-      reply.code(400).send({ error: 'Email is required' })
-      return
-    }
-
     const email = body.email.toLowerCase().trim()
 
     const user = await fastify.prisma.portalUser.findUnique({
       where: { email },
     })
 
-    // Don't reveal if user exists for security
     if (!user || user.status !== 'ACTIVE') {
       reply.send({ message: 'If an account exists, a password reset link has been sent' })
       return
     }
 
-    // Generate reset token
     const resetToken = randomBytes(32).toString('hex')
     const resetTokenExpiresAt = new Date()
-    resetTokenExpiresAt.setHours(resetTokenExpiresAt.getHours() + 1) // 1 hour expiry
+    resetTokenExpiresAt.setHours(resetTokenExpiresAt.getHours() + 1)
 
     await fastify.prisma.portalUser.update({
       where: { id: user.id },
@@ -323,13 +373,12 @@ const authService: FastifyPluginAsync = async (fastify) => {
       },
     })
 
-    // Send email with reset link
     const emailService = fastify.emailService
     if (emailService) {
       const frontendUrl = process.env.PATIENT_PORTAL_FRONTEND_URL || 'http://localhost:3002'
       const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`
 
-      await emailService.sendPasswordResetEmail(user.email, resetLink).catch((err) => {
+      await emailService.sendPasswordResetEmail(user.email, resetLink).catch((err: any) => {
         fastify.log.warn({ error: err, email: user.email }, 'Failed to send password reset email')
       })
     } else {
@@ -339,13 +388,8 @@ const authService: FastifyPluginAsync = async (fastify) => {
     reply.send({ message: 'If an account exists, a password reset link has been sent' })
   })
 
-  fastify.post('/auth/verify-reset-token', async (request, reply) => {
+  fastify.post('/auth/verify-reset-token', { schema: verifyResetTokenSchema }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as VerifyResetTokenBody
-
-    if (!body.resetToken) {
-      reply.code(400).send({ error: 'resetToken is required' })
-      return
-    }
 
     const user = await fastify.prisma.portalUser.findFirst({
       where: {
@@ -366,18 +410,8 @@ const authService: FastifyPluginAsync = async (fastify) => {
     reply.send({ valid: true, email: user.email })
   })
 
-  fastify.post('/auth/reset', async (request, reply) => {
+  fastify.post('/auth/reset', { schema: resetPasswordSchema, ...authRateLimit }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as ResetPasswordBody
-
-    if (!body.resetToken || !body.newPassword) {
-      reply.code(400).send({ error: 'resetToken and newPassword are required' })
-      return
-    }
-
-    if (body.newPassword.length < 8) {
-      reply.code(400).send({ error: 'Password must be at least 8 characters' })
-      return
-    }
 
     const user = await fastify.prisma.portalUser.findFirst({
       where: {
@@ -406,10 +440,8 @@ const authService: FastifyPluginAsync = async (fastify) => {
       },
     })
 
-      reply.send({ message: 'Password reset successfully' })
+    reply.send({ message: 'Password reset successfully' })
   })
 }
 
 export default authService
-
-

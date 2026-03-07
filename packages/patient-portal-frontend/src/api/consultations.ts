@@ -28,15 +28,6 @@ export interface ConsultationDetail {
   }>
 }
 
-export interface ProposeSlotRequest {
-  start: string
-  end: string
-}
-
-export interface CompleteConsultationRequest {
-  notes?: string
-}
-
 export const consultationsApi = {
   list: async (): Promise<{ items: ConsultationDetail[] }> => {
     return apiClient.fetch<{ items: ConsultationDetail[] }>('/consultations')
@@ -44,20 +35,6 @@ export const consultationsApi = {
 
   get: async (id: string): Promise<ConsultationDetail> => {
     return apiClient.fetch<ConsultationDetail>(`/consultations/${id}`)
-  },
-
-  proposeSlot: async (id: string, data: ProposeSlotRequest): Promise<any> => {
-    return apiClient.fetch(`/consultations/${id}/slots`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-  },
-
-  complete: async (id: string, data: CompleteConsultationRequest): Promise<ConsultationDetail> => {
-    return apiClient.fetch<ConsultationDetail>(`/consultations/${id}/complete`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
   },
 }
 

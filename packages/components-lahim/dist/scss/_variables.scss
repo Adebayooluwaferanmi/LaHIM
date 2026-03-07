@@ -1,10 +1,48 @@
+// Elegant Professional Healthcare Color Palette
+// Designed for Trust, Elegance, and Confidence
+
+// Primary Colors - Deep Navy (Trust & Professionalism)
+$navy-deep: #0f172a;        // Deep navy for headers and primary elements
+$navy-dark: #1e293b;         // Dark navy for secondary elements
+$navy-medium: #334155;       // Medium navy for borders and accents
+$navy-light: #475569;        // Light navy for text
+
+// Platinum & Silver (Elegance & Sophistication)
+$platinum: #F8FAFC;          // Platinum white for backgrounds
+$platinum-light: #FFFFFF;    // Pure white
+$silver: #E2E8F0;            // Silver for borders and dividers
+$silver-dark: #CBD5E1;       // Darker silver for subtle accents
+
+// Emerald Green (Health & Growth)
+$emerald: #10b981;           // Vibrant emerald for primary actions
+$emerald-dark: #059669;      // Dark emerald for hover states
+$emerald-light: #D1FAE5;     // Light emerald for backgrounds
+$emerald-pale: #ECFDF5;      // Pale emerald for subtle highlights
+
+// Refined Gold (Elegance & Premium)
+$gold: #D4AF37;              // Refined gold for accents
+$gold-light: #F4D03F;       // Light gold for highlights
+$gold-pale: #FEF3C7;        // Pale gold for backgrounds
+$gold-dark: #B8860B;        // Dark gold for borders
+
+// Professional Grays
+$charcoal: #1F2937;          // Charcoal for text
+$charcoal-light: #374151;    // Light charcoal for secondary text
+$gray-soft: #F3F4F6;         // Soft gray for backgrounds
+
+// Semantic Colors
+$success: #10b981;           // Emerald green
+$warning: #F59E0B;           // Amber for warnings
+$danger: #EF4444;            // Red for errors
+$info: #3B82F6;              // Blue for information
+
 $theme-colors: (
-  "primary": #1abc9c,
-  "secondary": #009b9e,
-  "success": #273647,
-  "warning": #ffc107,
-  "danger": #dc3545,
-  "info": #177db8,
-  "light": #fdfffc,
-  "dark": #011627
+  "primary": $emerald,
+  "secondary": $navy-deep,
+  "success": $success,
+  "warning": $warning,
+  "danger": $danger,
+  "info": $info,
+  "light": $platinum,
+  "dark": $navy-deep
 );

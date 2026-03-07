@@ -16,10 +16,6 @@ import Profile from './pages/Profile'
 import Consultations from './pages/Consultations'
 import ConsultationDetail from './pages/ConsultationDetail'
 
-// Consultant pages
-import ConsultantDashboard from './pages/ConsultantDashboard'
-import ConsultantConsultationDetail from './pages/ConsultantConsultationDetail'
-
 function App() {
   const { isAuthenticated, user } = useAuth()
 
@@ -45,8 +41,6 @@ function App() {
                   element={
                     user?.role === 'PATIENT' ? (
                       <Dashboard />
-                    ) : user?.role === 'EXTERNAL_CONSULTANT' ? (
-                      <Navigate to="/consultant/dashboard" />
                     ) : (
                       <Navigate to="/login" />
                     )
@@ -63,28 +57,6 @@ function App() {
                 <Route
                   path="/consultations/:id"
                   element={user?.role === 'PATIENT' ? <ConsultationDetail /> : <Navigate to="/login" />}
-                />
-
-                {/* Consultant routes */}
-                <Route
-                  path="/consultant/dashboard"
-                  element={
-                    user?.role === 'EXTERNAL_CONSULTANT' ? (
-                      <ConsultantDashboard />
-                    ) : (
-                      <Navigate to="/login" />
-                    )
-                  }
-                />
-                <Route
-                  path="/consultant/consultations/:id"
-                  element={
-                    user?.role === 'EXTERNAL_CONSULTANT' ? (
-                      <ConsultantConsultationDetail />
-                    ) : (
-                      <Navigate to="/login" />
-                    )
-                  }
                 />
 
                 <Route path="*" element={<Navigate to="/" />} />

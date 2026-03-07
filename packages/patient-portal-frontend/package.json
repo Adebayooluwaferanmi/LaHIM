@@ -13,7 +13,7 @@
     "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix"
   },
   "dependencies": {
-    "@lahim/components": "workspace:*",
+    "@lahim/components": "*",
     "@tanstack/react-query": "^5.0.0",
     "bootstrap": "~4.4.1",
     "date-fns": "~2.12.0",

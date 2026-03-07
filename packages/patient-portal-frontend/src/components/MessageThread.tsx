@@ -44,7 +44,7 @@ export default function MessageThread({ consultationId }: MessageThreadProps) {
       ) : mainThread ? (
         <div>
           <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '20px' }}>
-            {mainThread.messages.map((message) => {
+            {(mainThread?.messages ?? []).map((message) => {
               const isOwnMessage = message.senderUserId === user?.id
               return (
                 <div

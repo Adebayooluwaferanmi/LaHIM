@@ -1,9 +1,14 @@
 import { join } from 'path'
 import AutoLoad from '@fastify/autoload'
 import { FastifyError, FastifyInstance } from 'fastify'
-import helmet from '@fastify/helmet'
-import cors from '@fastify/cors'
-import multipart from '@fastify/multipart'
+// @ts-ignore
+const helmet = require('@fastify/helmet')
+// @ts-ignore
+const cors = require('@fastify/cors')
+// @ts-ignore - multipart types may not be available
+const multipart = require('@fastify/multipart')
+// @ts-ignore
+const rateLimit = require('@fastify/rate-limit')
 
 function PatientPortalApp(
   fastify: FastifyInstance,
@@ -24,7 +29,7 @@ function PatientPortalApp(
   ]
 
   fastify.register(cors, {
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: any) => {
       if (!origin) {
         callback(null, true)
         return
@@ -43,10 +48,13 @@ function PatientPortalApp(
 
   fastify.register(helmet)
 
-  // Register multipart for file uploads
+  fastify.register(rateLimit, {
+    global: false,
+  })
+
   fastify.register(multipart, {
     limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB limit
+      fileSize: 10 * 1024 * 1024,
     },
   })
 

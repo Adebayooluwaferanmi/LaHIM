@@ -1,13 +1,32 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { patientsApi } from '../api/patients'
-import { Panel, Spinner, Alert } from '@lahim/components'
-import { Row, Col, Table } from 'react-bootstrap'
+import { Panel, Spinner, Alert, Button } from '@lahim/components'
+import { Row, Col, Table, Form } from 'react-bootstrap'
 import { format } from 'date-fns'
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
+  const [recipientEmail, setRecipientEmail] = useState('')
+  const [accessType, setAccessType] = useState<'VIEW_RECORD' | 'UPDATE_LABS'>('VIEW_RECORD')
+
+  const createRequestMutation = useMutation({
+    mutationFn: (body: { recipientEmail: string; type: 'VIEW_RECORD' | 'UPDATE_LABS' }) =>
+      patientsApi.createExternalAccessRequest(body),
+    onSuccess: () => {
+      setRecipientEmail('')
+      queryClient.invalidateQueries({ queryKey: [] })
+    },
+  })
+
+  const handleShareSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!recipientEmail.trim()) return
+    createRequestMutation.mutate({ recipientEmail: recipientEmail.trim(), type: accessType })
+  }
 
   const { data: appointments, isLoading: appointmentsLoading } = useQuery({
     queryKey: ['appointments'],
@@ -28,6 +47,63 @@ export default function Dashboard() {
   return (
     <div>
       <h1>Welcome, {user?.patientProfile?.firstName || user?.email}</h1>
+
+      <Row className="mb-4">
+        <Col md={12}>
+          <Panel title="Share my record (one-time link)">
+            <p className="text-muted small">
+              Request a 24-hour one-time link for an external doctor to view your record, or for a lab to update your results. Your facility admin must approve the request; then the link is sent to the email below.
+            </p>
+            <Form onSubmit={handleShareSubmit}>
+              <Row>
+                <Col md={4}>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Recipient email</Form.Label>
+                    <Form.Control
+                      type="email"
+                      value={recipientEmail}
+                      onChange={(e) => setRecipientEmail(e.target.value)}
+                      placeholder="doctor@example.com"
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Access type</Form.Label>
+                    <Form.Select
+                      value={accessType}
+                      onChange={(e) => setAccessType(e.target.value as 'VIEW_RECORD' | 'UPDATE_LABS')}
+                    >
+                      <option value="VIEW_RECORD">View my record (doctor)</option>
+                      <option value="UPDATE_LABS">Update lab results (lab)</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={4} className="d-flex align-items-end">
+                  <Button
+                    type="submit"
+                    color="primary"
+                    disabled={createRequestMutation.isPending}
+                  >
+                    {createRequestMutation.isPending ? 'Sending...' : 'Request link'}
+                  </Button>
+                </Col>
+              </Row>
+              {createRequestMutation.isSuccess && (
+                <Alert color="success" className="mt-2">
+                  Request sent. Your facility will approve it and the recipient will receive the link by email.
+                </Alert>
+              )}
+              {createRequestMutation.isError && (
+                <Alert color="danger" className="mt-2">
+                  {(createRequestMutation.error as { error?: string }).error || 'Request failed'}
+                </Alert>
+              )}
+            </Form>
+          </Panel>
+        </Col>
+      </Row>
 
       <Row>
         <Col md={6}>

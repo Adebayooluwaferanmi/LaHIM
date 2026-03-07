@@ -1,10 +1,29 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
 interface CreateMessageBody {
   body: string
 }
 
-const messagingService: FastifyPluginAsync = async (fastify) => {
+const idParamsSchema = {
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: { id: { type: 'string', format: 'uuid' } },
+  },
+}
+
+const createMessageSchema = {
+  ...idParamsSchema,
+  body: {
+    type: 'object',
+    required: ['body'],
+    properties: {
+      body: { type: 'string', minLength: 1 },
+    },
+  },
+}
+
+const messagingService: FastifyPluginAsync = async (fastify: any) => {
   const ensureAccessToCase = async (userId: string, role: string, caseId: string) => {
     const consultation = await fastify.prisma.consultationCase.findUnique({
       where: { id: caseId },
@@ -42,9 +61,10 @@ const messagingService: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/consultations/:id/messages',
     {
+      schema: idParamsSchema,
       preHandler: fastify.authenticate.bind(fastify),
     },
-    async (request, reply) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = request.user as { sub: string; role: string }
       const { id } = request.params as { id: string }
 
@@ -73,8 +93,7 @@ const messagingService: FastifyPluginAsync = async (fastify) => {
       }
 
       reply.send({
-        threadId: thread.id,
-        items: thread.messages,
+        items: [{ id: thread.id, messages: thread.messages }],
       })
     },
   )
@@ -82,17 +101,13 @@ const messagingService: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/consultations/:id/messages',
     {
+      schema: createMessageSchema,
       preHandler: fastify.authenticate.bind(fastify),
     },
-    async (request, reply) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = request.user as { sub: string; role: string }
       const { id } = request.params as { id: string }
-      const body = request.body as CreateMessageBody
-
-      if (!body.body || body.body.trim().length === 0) {
-        reply.code(400).send({ error: 'Message body is required' })
-        return
-      }
+      const msgBody = request.body as CreateMessageBody
 
       const access = await ensureAccessToCase(currentUser.sub, currentUser.role, id)
       if (!access.allowed) {
@@ -105,9 +120,7 @@ const messagingService: FastifyPluginAsync = async (fastify) => {
       }
 
       const thread = await fastify.prisma.messageThread.upsert({
-        where: {
-          caseId: id,
-        } as any,
+        where: { caseId: id },
         update: {},
         create: {
           caseId: id,
@@ -119,16 +132,46 @@ const messagingService: FastifyPluginAsync = async (fastify) => {
         data: {
           threadId: thread.id,
           senderUserId: currentUser.sub,
-          body: body.body,
+          body: msgBody.body,
         },
       })
+
+      if (fastify.emailService && access.consultation) {
+        const caseWithParties = await fastify.prisma.consultationCase.findUnique({
+          where: { id },
+          include: {
+            consultant: { include: { user: true } },
+            patientProfile: { include: { user: true } },
+          },
+        })
+        const title = caseWithParties?.title || `Consultation ${id}`
+        const recipientEmail =
+          currentUser.role === 'PATIENT'
+            ? caseWithParties?.consultant?.user?.email
+            : caseWithParties?.patientProfile?.user?.email
+        if (recipientEmail) {
+          const senderUser = await fastify.prisma.portalUser.findUnique({
+            where: { id: currentUser.sub },
+            include: { patientProfile: true, consultantProfile: true },
+          })
+          const senderName =
+            senderUser?.patientProfile
+              ? [senderUser.patientProfile.firstName, senderUser.patientProfile.lastName].filter(Boolean).join(' ') || senderUser.email
+              : senderUser?.consultantProfile
+                ? senderUser.email
+                : senderUser?.email || 'Someone'
+          const messagePreview = msgBody.body.substring(0, 200) + (msgBody.body.length > 200 ? '...' : '')
+          await fastify.emailService
+            .sendNewMessageNotification(recipientEmail, title, senderName, messagePreview)
+            .catch((err: any) => {
+              fastify.log.warn({ error: err }, 'Failed to send new message notification')
+            })
+        }
+      }
 
       reply.code(201).send(message)
     },
   )
-
 }
 
 export default messagingService
-
-

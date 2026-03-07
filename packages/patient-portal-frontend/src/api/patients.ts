@@ -69,6 +69,16 @@ export const patientsApi = {
   getConsultations: async (): Promise<{ items: Consultation[] }> => {
     return apiClient.fetch<{ items: Consultation[] }>('/patients/me/consultations')
   },
+
+  createExternalAccessRequest: async (body: {
+    recipientEmail: string
+    type: 'VIEW_RECORD' | 'UPDATE_LABS'
+  }): Promise<{ id: string; status: string }> => {
+    return apiClient.fetch<{ id: string; status: string }>('/patients/me/external-access-requests', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
 }
 
 

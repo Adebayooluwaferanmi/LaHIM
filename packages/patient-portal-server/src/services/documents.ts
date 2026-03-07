@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { randomBytes } from 'crypto'
@@ -12,7 +12,39 @@ interface CreateDocumentBody {
   size?: number
 }
 
-const documentsService: FastifyPluginAsync = async (fastify) => {
+const caseIdParamsSchema = {
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: { id: { type: 'string', format: 'uuid' } },
+  },
+}
+
+const docIdParamsSchema = {
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: { id: { type: 'string', format: 'uuid' } },
+  },
+}
+
+const createDocumentSchema = {
+  ...caseIdParamsSchema,
+  body: {
+    type: 'object',
+    required: ['type'],
+    properties: {
+      type: { type: 'string', minLength: 1 },
+      title: { type: 'string' },
+      filename: { type: 'string' },
+      storageKey: { type: 'string' },
+      contentType: { type: 'string' },
+      size: { type: 'integer', minimum: 0 },
+    },
+  },
+}
+
+const documentsService: FastifyPluginAsync = async (fastify: any) => {
   const ensureCaseAccess = async (userId: string, role: string, caseId: string) => {
     const consultation = await fastify.prisma.consultationCase.findUnique({
       where: { id: caseId },
@@ -50,9 +82,10 @@ const documentsService: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/consultations/:id/documents',
     {
+      schema: caseIdParamsSchema,
       preHandler: fastify.authenticate.bind(fastify),
     },
-    async (request, reply) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = request.user as { sub: string; role: string }
       const { id } = request.params as { id: string }
 
@@ -78,17 +111,13 @@ const documentsService: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/consultations/:id/documents',
     {
+      schema: createDocumentSchema,
       preHandler: fastify.authenticate.bind(fastify),
     },
-    async (request, reply) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = request.user as { sub: string; role: string }
       const { id } = request.params as { id: string }
       const body = request.body as CreateDocumentBody
-
-      if (!body.type) {
-        reply.code(400).send({ error: 'type is required' })
-        return
-      }
 
       const access = await ensureCaseAccess(currentUser.sub, currentUser.role, id)
       if (!access.allowed) {
@@ -120,9 +149,10 @@ const documentsService: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/documents/:id/download',
     {
+      schema: docIdParamsSchema,
       preHandler: fastify.authenticate.bind(fastify),
     },
-    async (request, reply) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = request.user as { sub: string; role: string }
       const { id } = request.params as { id: string }
 
@@ -152,7 +182,6 @@ const documentsService: FastifyPluginAsync = async (fastify) => {
         return
       }
 
-      // If storage key exists, try to serve the file
       if (doc.storageKey) {
         const uploadsDir = join(process.cwd(), 'uploads', 'consultations')
         const filePath = join(uploadsDir, doc.storageKey)
@@ -167,7 +196,6 @@ const documentsService: FastifyPluginAsync = async (fastify) => {
         }
       }
 
-      // Fallback to metadata if file not found
       reply.send({
         id: doc.id,
         type: doc.type,
@@ -180,13 +208,12 @@ const documentsService: FastifyPluginAsync = async (fastify) => {
     },
   )
 
-  // File upload endpoint
   fastify.post(
     '/consultations/:id/documents/upload',
     {
       preHandler: fastify.authenticate.bind(fastify),
     },
-    async (request, reply) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const currentUser = request.user as { sub: string; role: string }
       const { id } = request.params as { id: string }
 
@@ -200,28 +227,31 @@ const documentsService: FastifyPluginAsync = async (fastify) => {
         return
       }
 
-      const data = await request.file()
+      const data = await (request as any).file()
       if (!data) {
         reply.code(400).send({ error: 'No file uploaded' })
         return
       }
 
-      // Ensure uploads directory exists
       const uploadsDir = join(process.cwd(), 'uploads', 'consultations')
       if (!existsSync(uploadsDir)) {
         mkdirSync(uploadsDir, { recursive: true })
       }
 
-      // Generate unique filename
       const fileExtension = data.filename?.split('.').pop() || ''
       const storageKey = `${randomBytes(16).toString('hex')}.${fileExtension}`
       const filePath = join(uploadsDir, storageKey)
 
-      // Write file to disk
+      const buffer = await data.toBuffer()
       const writeStream = createWriteStream(filePath)
-      await data.file.pipe(writeStream)
+      writeStream.write(buffer)
+      writeStream.end()
 
-      // Create document record
+      await new Promise<void>((resolve, reject) => {
+        writeStream.on('finish', () => resolve())
+        writeStream.on('error', reject)
+      })
+
       const created = await fastify.prisma.consultationDocument.create({
         data: {
           caseId: id,
@@ -230,7 +260,7 @@ const documentsService: FastifyPluginAsync = async (fastify) => {
           filename: data.filename,
           storageKey,
           contentType: data.mimetype || 'application/octet-stream',
-          size: data.file.bytesRead || null,
+          size: buffer.length || null,
           uploadedByUserId: currentUser.sub,
         },
       })
@@ -238,9 +268,6 @@ const documentsService: FastifyPluginAsync = async (fastify) => {
       reply.code(201).send(created)
     },
   )
-
 }
 
 export default documentsService
-
-
