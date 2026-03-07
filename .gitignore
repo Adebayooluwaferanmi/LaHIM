@@ -72,6 +72,8 @@ typings/
 !README.md
 !LICENSE
 !SECURITY.md
+!ARCHITECTURE_AND_DESIGN.md
+!LIMS_COMPREHENSIVE_DESIGN.md
 # Exclude all documentation directories
 docs/
 # Exclude root-level documentation files
@@ -92,4 +94,3 @@ SUMMARY.md
 TEST_RESULTS.md
 TESTING_COMPLETE.md
 VERSION_FIXES_APPLIED.md
-LIMS_COMPREHENSIVE_DESIGN.md
