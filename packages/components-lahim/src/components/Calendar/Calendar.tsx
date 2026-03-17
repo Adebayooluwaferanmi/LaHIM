@@ -7,11 +7,6 @@ import React from 'react'
 
 import Event from './interfaces'
 
-// FullCalendar CSS imports - v5+ uses index.css
-import '@fullcalendar/core/index.css'
-import '@fullcalendar/daygrid/index.css'
-import '@fullcalendar/timegrid/index.css'
-
 type View = 'day' | 'month' | 'week'
 
 export interface CalendarProps {

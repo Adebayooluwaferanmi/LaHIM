@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      '@lahim/components/scss': path.resolve(__dirname, '../components-lahim/dist/scss'),
       '@': path.resolve(__dirname, './src'),
       '@lahim/components': path.resolve(__dirname, '../components-lahim/dist/index.esm'),
     },

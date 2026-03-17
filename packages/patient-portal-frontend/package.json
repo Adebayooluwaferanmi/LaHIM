@@ -16,7 +16,7 @@
     "@lahim/components": "*",
     "@tanstack/react-query": "^5.0.0",
     "bootstrap": "~4.4.1",
-    "date-fns": "~2.12.0",
+    "date-fns": "^3.6.0",
     "react": "^18.3.0",
     "react-bootstrap": "^2.10.0",
     "react-dom": "^18.3.0",
