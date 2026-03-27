@@ -1,20 +1,12 @@
 import { join } from 'path'
 import AutoLoad from '@fastify/autoload'
-import { FastifyError, FastifyInstance } from 'fastify'
-// @ts-ignore
-const helmet = require('@fastify/helmet')
-// @ts-ignore
-const cors = require('@fastify/cors')
-// @ts-ignore - multipart types may not be available
-const multipart = require('@fastify/multipart')
-// @ts-ignore
-const rateLimit = require('@fastify/rate-limit')
+import { FastifyInstance } from 'fastify'
+import helmet from '@fastify/helmet'
+import cors from '@fastify/cors'
+import multipart from '@fastify/multipart'
+import rateLimit from '@fastify/rate-limit'
 
-function PatientPortalApp(
-  fastify: FastifyInstance,
-  opts: any,
-  next: (err?: FastifyError) => void,
-) {
+async function PatientPortalApp(fastify: FastifyInstance, opts: any) {
   const frontendUrl =
     process.env.PATIENT_PORTAL_FRONTEND_URL ||
     process.env.FRONTEND_URL ||
@@ -67,8 +59,6 @@ function PatientPortalApp(
     dir: join(__dirname, 'services'),
     options: { ...opts },
   } as any)
-
-  next()
 }
 
 PatientPortalApp.options = {
@@ -76,6 +66,6 @@ PatientPortalApp.options = {
   ignoreTrailingSlash: true,
 }
 
-export = PatientPortalApp
+export default PatientPortalApp
 
 

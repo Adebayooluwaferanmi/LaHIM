@@ -60,6 +60,7 @@
     "@fullcalendar/timegrid": "^6.1.15",
     "classnames": "^2.3.2",
     "date-fns": "^3.6.0",
+    "react-bootstrap-typeahead": "^6.0.0",
     "react-datepicker": "^4.25.0",
     "react-spinners": "^0.13.8",
     "react-toastify": "^9.1.3"

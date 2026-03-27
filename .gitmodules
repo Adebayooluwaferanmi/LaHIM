@@ -1,18 +1,9 @@
 [submodule "packages/server"]
 	path = packages/server
-	url = git@github.com:Adebayooluwaferanmi/hospitalrun-server.git
-[submodule "packages/components"]
-	path = packages/components
-	url = git@github.com:Adebayooluwaferanmi/components.git
+	url = https://github.com/Adebayooluwaferanmi/hospitalrun-server.git
 [submodule "packages/frontend"]
 	path = packages/frontend
-	url = git@github.com:Adebayooluwaferanmi/hospitalrun-frontend.git
-[submodule "packages/core"]
-	path = packages/core
-	url = git@github.com:Adebayooluwaferanmi/hospitalrun-core.git
-[submodule "packages/cli"]
-	path = packages/cli
-	url = git@github.com:Adebayooluwaferanmi/cli.git
+	url = https://github.com/Adebayooluwaferanmi/hospitalrun-frontend.git
 [submodule "lahim.io"]
 	path = lahim.io
-	url = git@github.com:Adebayooluwaferanmi/github.lahim.io.git
+	url = https://github.com/Adebayooluwaferanmi/github.lahim.io.git

@@ -8,23 +8,17 @@
   "private": true,
   "scripts": {
     "test": "echo 'No root tests'",
+    "test:all": "npm run test:ci --workspace=@lahim/frontend && npm run test --workspace=@lahim/server && npm run test --workspace=@lahim/patient-portal-server && npm run test --workspace=@lahim/cli && npm run test --workspace=@lahim/components",
     "commit": "npx git-cz",
-    "commit-components": "yarn workspace @hospitalrun/components commit",
-    "commit-cli": "yarn workspace @hospitalrun/cli commit",
-    "commit-core": "yarn workspace @hospitalrun/core commit",
-    "commit-frontend": "yarn workspace @hospitalrun/frontend commit",
-    "commit-server": "yarn workspace @hospitalrun/server commit",
-    "update": "yarn upgrade-interactive --latest",
     "dev:db": "docker compose up -d couchdb",
-    "dev:server": "yarn workspace @hospitalrun/server dev:start",
-    "dev:frontend": "yarn workspace @hospitalrun/frontend start",
-    "dev:portal-server": "yarn workspace @lahim/patient-portal-server dev",
-    "dev:portal-frontend": "yarn workspace @lahim/patient-portal-frontend dev",
-    "build:frontend": "yarn workspace @hospitalrun/frontend build",
-    "build:portal": "yarn workspace @lahim/patient-portal-server build && yarn workspace @lahim/patient-portal-frontend build",
-    "build:lahim.io": "yarn workspace @lahim/components build && yarn workspace @hospitalrun/frontend build && rm -rf lahim.io && mkdir -p lahim.io && cp -r packages/frontend/build/* lahim.io/ && cp lahim.io/index.html lahim.io/404.html && touch lahim.io/.nojekyll",
-    "setup:lahim.io": "bash scripts/setup-lahim-io-repo.sh",
-    "deploy:lahim.io": "bash scripts/deploy-lahim-io.sh",
+    "dev:server": "npm run --workspace=@lahim/server dev:start",
+    "dev:frontend": "npm run --workspace=@lahim/frontend start",
+    "dev:portal-server": "npm run --workspace=@lahim/patient-portal-server dev",
+    "dev:portal-frontend": "npm run --workspace=@lahim/patient-portal-frontend dev",
+    "build:frontend": "npm run --workspace=@lahim/frontend build",
+    "build:components": "npm run --workspace=@lahim/components build",
+    "build:portal": "npm run --workspace=@lahim/patient-portal-server build; npm run --workspace=@lahim/patient-portal-frontend build",
+    "build:lahim.io": "npm run build:components; npm run build:frontend; node -e \"const fs=require('fs');fs.rmSync('lahim.io',{recursive:true,force:true});fs.cpSync('packages/frontend/build','lahim.io',{recursive:true});fs.copyFileSync('lahim.io/index.html','lahim.io/404.html');fs.writeFileSync('lahim.io/.nojekyll','')\"",
     "serve:frontend": "npx serve -s packages/frontend/build -l 3001",
     "serve:lahim.io": "npx serve -s lahim.io -l 3001",
     "prepare": "husky"
@@ -39,7 +33,9 @@
     "cross-env": "^7.0.3",
     "cz-conventional-changelog": "^3.3.0",
     "dateformat": "^5.0.3",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "tap": "~14.10.8",
+    "vitest": "^2.1.0"
   },
   "config": {
     "commitizen": {
@@ -48,7 +44,14 @@
   },
   "workspaces": {
     "packages": [
-      "packages/*"
+      "packages/cli",
+      "packages/components",
+      "packages/components-lahim",
+      "packages/frontend",
+      "packages/loinc",
+      "packages/patient-portal-frontend",
+      "packages/patient-portal-server",
+      "packages/server"
     ],
     "nohoist": [
       "**/husky",
@@ -81,6 +84,9 @@
     "typescript": "^5.7.0"
   },
   "overrides": {
-    "esprima-fb": "npm:esprima@^2.7.0"
+    "esprima-fb": "npm:esprima@^2.7.0",
+    "react-test-renderer": "^18.3.1",
+    "typescript": "^5.7.0",
+    "@types/babel__traverse": "7.11.1"
   }
 }

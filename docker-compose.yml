@@ -1,4 +1,9 @@
-version: "3.9"
+# Local stack aligned with future GKE: staff zone vs portal zone; shared Postgres only.
+# Portal containers cannot reach CouchDB/Redis (they are on lahim_staff only).
+# Core API and portal API communicate on lahim_core_bridge.
+#
+# From LaHIM/: docker compose --env-file .env.docker up --build
+# Copy .env.docker.example to .env.docker and set PORTAL_SERVICE_TOKEN / PATIENT_PORTAL_JWT_SECRET.
 
 services:
   couchdb:
@@ -17,7 +22,7 @@ services:
       timeout: 3s
       retries: 20
     networks:
-      - lahim-network
+      - lahim_staff
 
   postgres:
     image: postgres:16-alpine
@@ -30,13 +35,15 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lahim"]
       interval: 5s
       timeout: 3s
       retries: 20
     networks:
-      - lahim-network
+      - lahim_staff
+      - lahim_portal
 
   redis:
     image: redis:7-alpine
@@ -51,7 +58,88 @@ services:
       timeout: 3s
       retries: 20
     networks:
-      - lahim-network
+      - lahim_staff
+
+  lahim-server:
+    build:
+      context: .
+      dockerfile: docker/server/Dockerfile
+    container_name: lahim-server
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      IP: 0.0.0.0
+      COUCHDB_URL: http://dev:dev@couchdb:5984
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      DATABASE_URL: postgresql://lahim:lahim_dev@postgres:5432/lahim
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      PATIENT_PORTAL_API_URL: http://patient-portal-server:4001
+      PORTAL_SERVICE_TOKEN: ${PORTAL_SERVICE_TOKEN:-dev-portal-service-token}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      couchdb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lahim_staff
+      - lahim_core_bridge
+
+  staff-frontend:
+    build:
+      context: .
+      dockerfile: docker/staff-frontend/Dockerfile
+      args:
+        VITE_HOSPITALRUN_API: ${VITE_HOSPITALRUN_API:-http://localhost:3000}
+    container_name: lahim-staff-frontend
+    ports:
+      - "3001:80"
+    depends_on:
+      - lahim-server
+    networks:
+      - lahim_staff
+
+  patient-portal-server:
+    build:
+      context: .
+      dockerfile: docker/patient-portal-server/Dockerfile
+    container_name: patient-portal-server
+    environment:
+      NODE_ENV: production
+      PORT: "4001"
+      PORTAL_DATABASE_URL: postgresql://lahim:lahim_dev@postgres:5432/patient_portal
+      PATIENT_PORTAL_JWT_SECRET: ${PATIENT_PORTAL_JWT_SECRET:-dev-patient-portal-jwt-secret}
+      PORTAL_SERVICE_TOKEN: ${PORTAL_SERVICE_TOKEN:-dev-portal-service-token}
+      PATIENT_PORTAL_FRONTEND_URL: ${PATIENT_PORTAL_FRONTEND_URL:-http://localhost:4002}
+      LAHIM_CORE_API_URL: http://lahim-server:3000
+    ports:
+      - "4001:4001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      lahim-server:
+        condition: service_started
+    networks:
+      - lahim_portal
+      - lahim_core_bridge
+
+  patient-portal-frontend:
+    build:
+      context: .
+      dockerfile: docker/patient-portal-frontend/Dockerfile
+      args:
+        VITE_PORTAL_API_URL: ${VITE_PORTAL_API_URL:-http://localhost:4001}
+    container_name: patient-portal-frontend
+    ports:
+      - "4002:80"
+    depends_on:
+      - patient-portal-server
+    networks:
+      - lahim_portal
 
   prometheus:
     image: prom/prometheus:latest
@@ -59,13 +147,13 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./docker/prometheus/prometheus.docker.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
     networks:
-      - lahim-network
+      - lahim_staff
 
   grafana:
     image: grafana/grafana:latest
@@ -80,7 +168,7 @@ services:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
     networks:
-      - lahim-network
+      - lahim_staff
 
 volumes:
   couchdb-data:
@@ -95,7 +183,9 @@ volumes:
     driver: local
 
 networks:
-  lahim-network:
+  lahim_staff:
     driver: bridge
-
-
+  lahim_portal:
+    driver: bridge
+  lahim_core_bridge:
+    driver: bridge
