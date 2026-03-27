@@ -28,8 +28,7 @@
     "react",
     "components",
     "bootstrap",
-    "lims",
-    "hospitalrun"
+    "lims"
   ],
   "repository": {
     "type": "git",
@@ -81,4 +80,3 @@
     "vite-plugin-dts": "^3.9.0"
   }
 }
-

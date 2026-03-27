@@ -107,13 +107,13 @@ yarn build
 yarn dev  # Watch mode
 ```
 
-## Migration from @hospitalrun/components
+## Migration from the Legacy Components Package
 
-The API is designed to be compatible with `@hospitalrun/components`, so you can replace imports:
+The API is designed to be compatible with the legacy compatibility package, so you can replace imports:
 
 ```typescript
 // Old
-import { Button } from '@hospitalrun/components'
+import { Button } from '@lahim/components-legacy'
 
 // New
 import { Button } from '@lahim/components'

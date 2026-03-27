@@ -1,9 +1,18 @@
+[submodule "packages/cli"]
+	path = packages/cli
+	url = https://github.com/Adebayooluwaferanmi/lahim-cli.git
+[submodule "packages/components"]
+	path = packages/components
+	url = https://github.com/Adebayooluwaferanmi/lahim-components.git
+[submodule "packages/core"]
+	path = packages/core
+	url = https://github.com/Adebayooluwaferanmi/lahim-core.git
 [submodule "packages/server"]
 	path = packages/server
-	url = https://github.com/Adebayooluwaferanmi/hospitalrun-server.git
+	url = https://github.com/Adebayooluwaferanmi/lahim-server.git
 [submodule "packages/frontend"]
 	path = packages/frontend
-	url = https://github.com/Adebayooluwaferanmi/hospitalrun-frontend.git
+	url = https://github.com/Adebayooluwaferanmi/lahim-frontend.git
 [submodule "lahim.io"]
 	path = lahim.io
 	url = https://github.com/Adebayooluwaferanmi/github.lahim.io.git

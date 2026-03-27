@@ -51,7 +51,7 @@ function Select<T>(props: SelectProps<T>) {
         disabled={disabled}
         isInvalid={isInvalid}
         filterBy={(option: SelectOption<T>, selectProps: any) => {
-          // per https://github.com/HospitalRun/components/issues/517
+          // Preserve the existing key behavior for option rendering compatibility.
           // change component default behavior
           // multiple - filter-out current selections
           const isMatch = option.label.toLowerCase().indexOf(selectProps.text.toLowerCase()) !== -1

@@ -1,21 +1,23 @@
-# Responsible Disclosure Policy
+# Security Policy
 
-A responsible disclosure policy helps protect the project and its users from security vulnerabilities discovered in the project’s scope by employing a process where vulnerabilities are publicly disclosed after a reasonable time period to allow patching the vulnerability. 
-
-All security bugs are taken seriously and are considered as top priority. 
-Your efforts to responsibly disclose your findings are appreciated and will be taken into account to acknowledge your contributions.
+Security issues in LaHIM should be treated as high priority.
 
 ## Supported Versions
 
-This versions of HospitalRun project are currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 2.0.0   | :white_check_mark: |
-| 1.0.0-beta   | :x:           |
+| Version | Supported |
+| ------- | --------- |
+| 2.x     | Yes       |
+| 1.x     | No        |
 
 ## Reporting a Vulnerability
 
-Report security bugs by opening a new [Security Issue](https://github.com/HospitalRun/hospitalrun/issues/new?template=security.md). You can also report a vulnerability by emailing security@hospitalrun.io.
+Report vulnerabilities through your private project security process or a private maintainer channel rather than opening a public issue.
 
-Report security bugs in third-party modules to the maintainer or team maintaining the module. 
+When reporting a vulnerability, include:
+
+- A clear description of the issue.
+- Reproduction steps or proof of concept.
+- Affected versions, packages, or deployment surfaces.
+- Any suggested mitigation if you have one.
+
+If the issue affects a third-party dependency, also notify the upstream maintainer where appropriate.

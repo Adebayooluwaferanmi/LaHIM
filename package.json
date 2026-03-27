@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "LaHIM mono-repo",
   "repository": "git@github.com:Adebayooluwaferanmi/LaHIM.git",
-  "author": "Maksim Sink <maksim@sinik.it>",
+  "author": "LaHIM Team",
   "license": "MIT",
   "private": true,
   "scripts": {
