@@ -2,13 +2,25 @@
 # Portal containers cannot reach CouchDB/Redis (they are on lahim_staff only).
 # Core API and portal API communicate on lahim_core_bridge.
 #
-# From LaHIM/: docker compose --env-file .env.docker up --build
-# Copy .env.docker.example to .env.docker and set PORTAL_SERVICE_TOKEN / PATIENT_PORTAL_JWT_SECRET.
+# Boot-first core workflow:
+#   cp .env.docker.example .env.docker
+#   ./scripts/docker-build-native.sh lahim-server
+#   ./scripts/docker-up-native.sh postgres redis couchdb lahim-server
+#   ./scripts/verify-core-baseline.sh
+#   ./scripts/docker-build-native.sh staff-frontend
+#   ./scripts/docker-up-native.sh staff-frontend
+#
+# Easier local debugging:
+#   npm install
+#   cp .env.docker.example .env.docker
+#   cp .env.debug.example .env.debug
+#   npm run debug:infra
+#   npm run debug:server
+#   npm run debug:frontend
 
 services:
   couchdb:
     image: couchdb:3
-    container_name: hr-couchdb
     environment:
       - COUCHDB_USER=dev
       - COUCHDB_PASSWORD=dev
@@ -26,7 +38,6 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: hr-postgres
     environment:
       - POSTGRES_USER=lahim
       - POSTGRES_PASSWORD=lahim_dev
@@ -47,7 +58,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: hr-redis
     ports:
       - "6379:6379"
     volumes:
@@ -64,7 +74,6 @@ services:
     build:
       context: .
       dockerfile: docker/server/Dockerfile
-    container_name: lahim-server
     environment:
       NODE_ENV: production
       PORT: "3000"
@@ -78,6 +87,16 @@ services:
       PORTAL_SERVICE_TOKEN: ${PORTAL_SERVICE_TOKEN:-dev-portal-service-token}
     ports:
       - "3000:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const http=require('http');const timeout=setTimeout(()=>process.exit(1),5000);http.get('http://127.0.0.1:3000/health',res=>{clearTimeout(timeout);process.exit(res.statusCode===200?0:1)}).on('error',()=>{clearTimeout(timeout);process.exit(1)})"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,12 +113,13 @@ services:
       context: .
       dockerfile: docker/staff-frontend/Dockerfile
       args:
+        VITE_LAHIM_API: ${VITE_LAHIM_API:-http://localhost:3000}
         VITE_HOSPITALRUN_API: ${VITE_HOSPITALRUN_API:-http://localhost:3000}
-    container_name: lahim-staff-frontend
     ports:
       - "3001:80"
     depends_on:
-      - lahim-server
+      lahim-server:
+        condition: service_healthy
     networks:
       - lahim_staff
 
@@ -107,7 +127,6 @@ services:
     build:
       context: .
       dockerfile: docker/patient-portal-server/Dockerfile
-    container_name: patient-portal-server
     environment:
       NODE_ENV: production
       PORT: "4001"
@@ -133,7 +152,6 @@ services:
       dockerfile: docker/patient-portal-frontend/Dockerfile
       args:
         VITE_PORTAL_API_URL: ${VITE_PORTAL_API_URL:-http://localhost:4001}
-    container_name: patient-portal-frontend
     ports:
       - "4002:80"
     depends_on:
@@ -143,7 +161,6 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: hr-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -157,7 +174,6 @@ services:
 
   grafana:
     image: grafana/grafana:latest
-    container_name: hr-grafana
     ports:
       - "3002:3000"
     environment:

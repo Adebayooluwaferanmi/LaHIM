@@ -66,10 +66,13 @@ typings/
 
 # dotenv environment variables file
 .env
+.env.docker
+.env.debug
 
 # Documentation files (keeping only README.md)
 *.md
 !README.md
+!BOOT_FIRST_RUNBOOK.md
 !LICENSE
 !SECURITY.md
 !ARCHITECTURE_AND_DESIGN.md

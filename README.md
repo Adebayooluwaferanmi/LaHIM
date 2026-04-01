@@ -30,21 +30,63 @@ Detailed architecture lives in [ARCHITECTURE_AND_DESIGN.md](/mnt/e/Alixa/LaHIM/A
 
 ## Local Development
 
-1. Clone the repository and install dependencies.
-2. Copy environment files for the packages you want to run.
-3. Start supporting services such as CouchDB if you are working on legacy/offline paths.
-4. Run the API and frontend packages you need.
+There are now two supported local paths, depending on what you need:
 
-Common commands:
+- Container parity and smoke checks: use [BOOT_FIRST_RUNBOOK.md](/mnt/e/Alixa/LaHIM/BOOT_FIRST_RUNBOOK.md)
+- Easy host-side debugging: keep only infra in Docker, then run the app processes directly from the workspace
+
+### Recommended Debug Workflow
+
+Use this path when you want faster iteration, Node inspector support, and Vite hot reload without rebuilding app images:
 
 ```bash
-yarn install
-yarn dev:db
-yarn dev:server
-yarn dev:frontend
-yarn dev:portal-server
-yarn dev:portal-frontend
+./scripts/check-debug-host.sh
+npm install
+cp .env.docker.example .env.docker
+cp .env.debug.example .env.debug
+npm run debug:infra
 ```
+
+Start the API in one terminal:
+
+```bash
+npm run debug:server
+```
+
+Start the staff frontend in a second terminal:
+
+```bash
+npm run debug:frontend
+```
+
+Optional when working on the shared React component package in parallel:
+
+```bash
+npm run debug:components
+```
+
+Useful endpoints for the debug flow:
+
+- Core API: `http://localhost:3000/health`
+- Staff frontend: `http://localhost:3001`
+- CouchDB: `http://localhost:5984/_utils`
+- PostgreSQL: `localhost:5432`
+- Redis: `localhost:6379`
+
+The server debug script already runs Node with `--inspect`, so you can attach your IDE debugger directly.
+Install Node/NPM inside Linux or WSL for this flow. A Windows Node install exposed through `/mnt/c/Program Files/nodejs` is not reliable here and already fails in this shell.
+
+### Container Baseline
+
+The strict boot-first container flow remains the right path for container parity checks of:
+
+- `postgres`
+- `redis`
+- `couchdb`
+- `lahim-server`
+- `staff-frontend`
+
+Portal services, observability services, and non-startup cleanup are intentionally out of scope until the core baseline is stable.
 
 Seed example vocabulary data:
 
